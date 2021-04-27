@@ -24,27 +24,6 @@ data$smoking <-as.numeric(data$smoking)
 data$time <-as.numeric(data$time)
 data$DEATH_EVENT <-as.numeric(data$DEATH_EVENT)
 
-#summary de edades
-age_mean <- summary(data$age)
-
-#frecuencias de sexo
-gender_freq<- data.frame(table(data$sex))
-#por lo tanto, sabemos que son 194 hombres y 105 mujeres
-#summary de diabetes
-diabetes_freq <- data.frame(table(data$diabetes))
-#174 no son diabeticos y 125 si
-
-#prueba de hipotesis: si es mujer y fumadora
-
-#matriz de covarianza
-cov_matrix <- cov(data)
-
-#matriz de correlacion
-library(corrplot)
-cor_matrix <- cor(data)
-corrplot(cor_matrix, type = "upper", order = "hclust", 
-         tl.col = "black", tl.srt = 45)
-
 
 #Obtencion de informacion relevante
 
@@ -71,11 +50,34 @@ df_ejection <- data.frame(table(data$ejection_fraction))
 df_creatinine <- data.frame(table(data$serum_creatinine))
 df_death <- data.frame(table(data$DEATH_EVENT))
 
-#Se intentan graficar
+#summary de edades
+age_mean <- summary(data$age)
+#Se obtiene que la edad aproximada de los pacientes corresponde a 60.83 
+
+#frecuencias de sexo
+gender_freq<- data.frame(table(data$sex))
+#por lo tanto, sabemos que son 194 hombres y 105 mujeres
+#summary de diabetes
+diabetes_freq <- data.frame(table(data$diabetes))
+#174 no son diabeticos y 125 si
+
+#Matriz de covarianza
+cov_matrix <- cov(data)
+#Para identificar tienden a aumentar o disminuir a la vez el coef es positivo
+
+#Matriz de correlacion
+library(corrplot)
+cor_matrix <- cor(data)
+corrplot(cor_matrix, type = "upper", order = "hclust", 
+         tl.col = "black", tl.srt = 45)
+#Se identifica que serum_creatinine presenta un grado de correlacion con death event
+#Correlacion verifica si hay relacion lineal entre las variables
+
+#Se grafica el numero de vivos (203) y fallecidos (96)
 pDeath<-  plot.barchart(df_death,df_death$Var1,df_death$Freq,"Estado","Frecuencia","Estado del paciente")
 show(pDeath)
-#Tablas de contingencia
 
+#Tablas de contingencia
 #Edad y muerte
 contingency.ageDeath <- table(data$age,data$DEATH_EVENT)
 contingency.smokingDeath <- table(data$smoking,data$DEATH_EVENT)
@@ -104,9 +106,13 @@ plot.barchart<-function(
 
 smoking.chi <- chisq.test(contingency.smokingDeath,simulate.p.value=FALSE)
 diabetes.chi <- chisq.test(contingency.diabetesDeath,simulate.p.value=FALSE)
+
+#H0: La observacion de la clase es independiente de la muerte
+#H1: La observacion de la clase es dependiente de la muerte
 ejection.chi <- chisq.test(contingency.ejectionDeath,simulate.p.value=TRUE)
 creatinine.chi <- chisq.test(contingency.creatinineDeath,simulate.p.value=TRUE)
 
+#Parte de mclust
 
 #Mclust
 life_state <- data$DEATH_EVENT
