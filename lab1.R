@@ -116,7 +116,8 @@ creatinine.chi <- chisq.test(contingency.creatinineDeath,simulate.p.value=TRUE)
 
 #Mclust
 life_state <- data$DEATH_EVENT
-df<- data[,c(2,4,5,6,8,13)]
+#df<- data[,c(2,4,5,6,8,13)]
+df <- data
 clPairs(df,life_state)
 
 m1<-Mclust(df)
