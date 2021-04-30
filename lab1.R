@@ -1,5 +1,6 @@
 library(mclust)
 library(ggplot2)
+library(corrplot)
 #dataset
 url <- "https://archive.ics.uci.edu/ml/machine-learning-databases/00519/heart_failure_clinical_records_dataset.csv"
 data <- read.csv(url,header=FALSE, fill=TRUE)
@@ -25,59 +26,10 @@ data$time <-as.numeric(data$time)
 data$DEATH_EVENT <-as.numeric(data$DEATH_EVENT)
 
 
-#Obtencion de informacion relevante
-
-#Media de edad y moda del estado de los pacientes (vivo/muerto)
-age_mean <- summary(data$age)
-ageMean <- mean(data$age)
-deathFreq <- data.frame(table(data$DEATH_EVENT))
-deathMode <- deathFreq[which.max(deathFreq$Freq),1] #203 sobreviven y 96 fallecen
-
-#Frecuencias relevantes
-diabetes_freq <- data.frame(table(data$diabetes)) #174 no son diabeticos y 125 lo son
-anaemia_freq <- data.frame(table(data$anaemia)) #170 no sufren de anemia y 129 sufren de anemia
-highBloodPressure_freq <- data.frame(table(data$high_blood_pressure)) #194 no sufren de presion alta y 105 sufren de presion alta
-sex_freq <- data.frame(table(data$sex)) #105 mujeres y 194 hombres
-smoking_freq <- data.frame(table(data$smoking)) #203 no son fumadores y 96 son fumadores
-
-
-#Data frames seleccionados
-df_age <- data.frame(table(data$age))
-df_diabetes <- data.frame(table(data$diabetes))
-df_sex <- data.frame(table(data$sex))
-df_smoking <- data.frame(table(data$smoking))
-df_ejection <- data.frame(table(data$ejection_fraction))
-df_creatinine <- data.frame(table(data$serum_creatinine))
-df_death <- data.frame(table(data$DEATH_EVENT))
-
-#summary de edades
-age_mean <- summary(data$age)
-#Se obtiene que la edad aproximada de los pacientes corresponde a 60.83 
-
-#frecuencias de sexo
-gender_freq<- data.frame(table(data$sex))
-#por lo tanto, sabemos que son 194 hombres y 105 mujeres
-#summary de diabetes
-diabetes_freq <- data.frame(table(data$diabetes))
-#174 no son diabeticos y 125 si
-
-#Matriz de covarianza
-cov_matrix <- cov(data)
-#Para identificar tienden a aumentar o disminuir a la vez el coef es positivo
-
-#Matriz de correlacion
-library(corrplot)
-cor_matrix <- cor(data)
-corrplot(cor_matrix, type = "upper", order = "hclust", 
-         tl.col = "black", tl.srt = 45)
-#Se identifica que serum_creatinine presenta un grado de correlacion con death event
-#Correlacion verifica si hay relacion lineal entre las variables
-
-#Se grafica el numero de vivos (203) y fallecidos (96)
+#Se intentan graficar
 pDeath<-  plot.barchart(df_death,df_death$Var1,df_death$Freq,"Estado","Frecuencia","Estado del paciente")
-show(pDeath)
 
-#Tablas de contingencia
+
 #Edad y muerte
 contingency.ageDeath <- table(data$age,data$DEATH_EVENT)
 contingency.smokingDeath <- table(data$smoking,data$DEATH_EVENT)
@@ -102,47 +54,76 @@ plot.barchart<-function(
     theme(panel.border = element_blank(),panel.background= element_blank())
 }
 
-#Pruebas de independencia chi cuadrado
 
+#Pruebas de independencia chi cuadrado
 smoking.chi <- chisq.test(contingency.smokingDeath,simulate.p.value=FALSE)
 diabetes.chi <- chisq.test(contingency.diabetesDeath,simulate.p.value=FALSE)
-
-#H0: La observacion de la clase es independiente de la muerte
-#H1: La observacion de la clase es dependiente de la muerte
 ejection.chi <- chisq.test(contingency.ejectionDeath,simulate.p.value=TRUE)
 creatinine.chi <- chisq.test(contingency.creatinineDeath,simulate.p.value=TRUE)
 
-#Parte de mclust
 
-#Mclust
-life_state <- data$DEATH_EVENT
-#df<- data[,c(2,4,5,6,8,13)]
-df <- data
-clPairs(df,life_state)
+#sin variables demograficas
+df2 <- data[,c(1,10,12)]
+#se quitan variables binarias y demograficas: alta presion, diabetes, anemia, edad, sexo y fumar
+library(corrplot)
+df3<- data[,-c(2,6,10,13,11,4)]
 
-m1<-Mclust(df)
-summary(m1)
+#Distribucion normal
 
-m2 <- Mclust(df,G=3)
-summary(m2, parameters = TRUE)
+creatinine_shapiro<- shapiro.test(df3$creatinine_phosphokinase)
+#p valor < 2.2 e -16, por lo tanto no hay dist normal
 
-#BIC criterio de informacion bayesiano para saber que modelo elegir
-BIC<-mclustBIC(df)
-plot(BIC)
-summary(BIC)
+ej_shapiro<- shapiro.test(df3$ejection_fraction)
+#p valor = 7.216 e-09, no hay dist normal
+plateletes_shapiro<- shapiro.test(df3$platelets)
+#p-value = 2.883e-12, no hay distribucion normal
 
-m3<- Mclust(df,G=3,modelNames = "VEI")
-plot(m3, what="classification")
-#legend("bottomright", legend= 1:3, #numero de clustersde mod6
- #     col = mclust.options("classPlotColors"),pch= mclust.options("classPlotSymbols"),title= "Classlabels:")
+sc_shapiro<- shapiro.test(df3$serum_creatinine)
+#p-value < 2.2e-16
 
-df2 <- data[,c(5,8,13)]
-BIC2<-mclustBIC(df2)
-plot(BIC2)
-summary(BIC2)
+ss_shapiro<- shapiro.test(df3$serum_sodium)
+#p-value = 9.215e-10, no hay dist normal
 
-m4 <- Mclust(df2,G=1,modelNames = "EEE")
-plot(m4, what="classification")
+time_shapiro<- shapiro.test(df3$time)
+#p-value = 6.285e-09, no hay distribucion normal
 
-#legend("bottomright", legend= 1:8, #numero de clustersde mod6
- #      col = mclust.options("classPlotColors"),pch= mclust.options("classPlotSymbols"),title= "Classlabels:")
+#Por ende, ninguna de las variables seleccionadas tiene distribucion normal
+
+
+#Matriz de Correlacion
+
+#quitando las variables binarias tampoco se ve una relacion fuerte y directa
+cor1<- cor(df3, method="pearson")
+corrplot(cor1, type = "upper", order = "hclust", 
+         tl.col = "black", tl.srt = 45)
+cor2<-cor(data,method="pearson")
+corrplot(cor2, type = "upper", order = "hclust", 
+         tl.col = "black", tl.srt = 45)
+#Respecto al dataset completo no hay ninguna relación directa considerablemente fuerte
+#No se puede eliminar ninguna variable por correlacion
+
+
+#componentes principales
+mainComp <- princomp(df3[,-1],cor=TRUE)
+
+#Standard deviations:
+#   Comp.1    Comp.2    Comp.3    Comp.4    Comp.5 
+#   1.1687022 1.0263117 0.9758482 0.9423384 0.8605453 
+
+mainComp2 <- princomp(data[,-1],cor=TRUE)
+#   Comp.1    Comp.2    Comp.3    Comp.4    Comp.5    Comp.6    Comp.7    Comp.8    Comp.9   Comp.10 
+# 1.3705926 1.2897875 1.1161642 1.0770952 1.0129771 0.9902277 0.9497127 0.9092745 0.8480106 0.8340641 
+#  Comp.11   Comp.12 
+# 0.7173861 0.6221990 
+
+#Importance of components:
+#                       Comp.1    Comp.2    Comp.3    Comp.4    Comp.5
+#Standard deviation     1.168702 1.0263117 0.9758482 0.9423384 0.8605453
+#Proportion of Variance 0.273173 0.2106631 0.1904559 0.1776003 0.1481076
+#Cumulative Proportion  0.273173 0.48383w61 0.6742920 0.8518924 1.0000000
+
+m1 <- mclustBIC(df3)
+plot(m1)
+
+m2<- Mclust(df3,G=7,modelNames="VVI")
+plot(m2, what="classification")
