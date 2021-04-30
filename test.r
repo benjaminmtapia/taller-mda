@@ -10,7 +10,20 @@ colnames(data) <- c("age","anaemia","creatinine_phosphokinase","diabetes","eject
                     "time","DEATH_EVENT")
 #Eliminacion de la fila contenedora de las clases
 data <- data[-c(1),]
-data$age <-as.integer(data$age)
+data <- data[-c(1),]
+data$age <-as.numeric(data$age)
+data$anaemia <-as.numeric(data$anaemia)
+data$creatinine_phosphokinase <-as.numeric(data$creatinine_phosphokinase)
+data$diabetes <-as.numeric(data$diabetes)
+data$ejection_fraction <-as.numeric(data$ejection_fraction)
+data$high_blood_pressure <-as.numeric(data$high_blood_pressure)
+data$platelets <-as.numeric(data$platelets)
+data$serum_creatinine <-as.numeric(data$serum_creatinine)
+data$serum_sodium <-as.numeric(data$serum_sodium)
+data$sex <-as.numeric(data$sex)
+data$smoking <-as.numeric(data$smoking)
+data$time <-as.numeric(data$time)
+data$DEATH_EVENT <-as.numeric(data$DEATH_EVENT)
 data <- as.data.frame(apply(data,2,as.numeric))
 #Variables
 
@@ -49,35 +62,35 @@ cpkMedian <- median(data$creatinine_phosphokinase)
 cpkFreq <- data.frame(table(data$creatinine_phosphokinase))
 cpkMode <- ageFreq[which.max(cpkFreq$Freq),1]
 cpkHist <- hist(x = data$creatinine_phosphokinase, main = "Histograma de CPK", 
-                xlab = "Medición (mcg/L)", ylab = "Frecuencia")
+                xlab = "Medici?n (mcg/L)", ylab = "Frecuencia")
 
 efMean <- mean(data$ejection_fraction)
 efMedian <- median(data$ejection_fraction)
 efFreq <- data.frame(table(data$ejection_fraction))
 efMode <- ageFreq[which.max(efFreq$Freq),1]
 efHist <- hist(x = data$ejection_fraction, main = "Histograma de Ejection Fracton", 
-                xlab = "Medición (%)", ylab = "Frecuencia")
+                xlab = "Medici?n (%)", ylab = "Frecuencia")
 
 plMean <- mean(data$platelets)
 plMedian <- median(data$platelets)
 plFreq <- data.frame(table(data$platelets))
 plMode <- ageFreq[which.max(plFreq$Freq),1]
 plHist <- hist(x = data$platelets, main = "Histograma de Plaquetas", 
-               xlab = "Medición (kiloplatelets/mL)", ylab = "Frecuencia")
+               xlab = "Medici?n (kiloplatelets/mL)", ylab = "Frecuencia")
 
 serumCMean <- mean(data$serum_creatinine)
 serumCMedian <- median(data$serum_creatinine)
 serumCFreq <- data.frame(table(data$serum_creatinine))
 serumCMode <- ageFreq[which.max(serumCFreq$Freq),1]
 serumCHist <- hist(x = data$serum_creatinine, main = "Histograma de Suero Creatininina", 
-               xlab = "Medición (mg/dL)", ylab = "Frecuencia")
+               xlab = "Medici?n (mg/dL)", ylab = "Frecuencia")
 
 serumSMean <- mean(data$serum_sodium)
 serumSMedian <- median(data$serum_sodium)
 serumSFreq <- data.frame(table(data$serum_sodium))
 serumSMode <- ageFreq[which.max(serumSFreq$Freq),1]
 serumSHist <- hist(x = data$serum_sodium, main = "Histograma de Suero Sodio", 
-                   xlab = "Medición (mEq/mL)", ylab = "Frecuencia")
+                   xlab = "Medici?n (mEq/mL)", ylab = "Frecuencia")
 
 #Analisis estadistico variables demograficas
 ageMean <- mean(data$age)
@@ -96,5 +109,7 @@ timeMedian <- median(data$time)
 timeFreq <- data.frame(table(data$time))
 timeMode <- ageFreq[which.max(timeFreq$Freq),1]
 timeHist <- hist(x = data$time, main = "Histograma de Tiempo de seguimiento", 
-                xlab = "Tiempo (Días)", ylab = "Frecuencia")
+                xlab = "Tiempo (D?as)", ylab = "Frecuencia")
+
+
 
