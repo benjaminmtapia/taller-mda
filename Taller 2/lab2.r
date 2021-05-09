@@ -47,6 +47,8 @@ probs <- predict(mod, data3[-training.ids,], type = "prob")
 pred <- prediction(probs[,2],data3[-training.ids,"DEATH_EVENT"])
 perf <- performance(pred,"tpr","fpr")
 plot(perf)
+a <- performance(pred,measure = "auc")
+#auc -> a@y.values
 
 #Realizado en clase
 
