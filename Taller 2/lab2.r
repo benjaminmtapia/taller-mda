@@ -53,18 +53,18 @@ a <- performance(pred,measure = "auc")
 #Realizado en clase
 
 #Otro random Forest
-mod2 <- randomForest(DEATH_EVENT ~ ., data = data3, importance = TRUE, proximity = TRUE)
+randomForest2 <- randomForest(DEATH_EVENT ~ ., data = data3, importance = TRUE, proximity = TRUE)
 
 #Importancia
-round(importance(mod2),2) 
+round(importance(randomForest2),2) 
 
 #Graficar para verificar atributos que aportan mas al proceso de clasificacion
-graph <- varImpPlot(mod2)
+graph <- varImpPlot(randomForest2)
 
 # Salto a **********
 
 #Proximidad   -> Escalamiento multidimensional
-prox <- cmdscale(1 - mod2$proximity, eig = TRUE)  
+prox <- cmdscale(1 - randomForest2$proximity, eig = TRUE)  
 op <- par(pty ="s")
 pairs(cbind(data3[,1:6],prox$points),cex = 0.6, gap = 0,
       col = c("red","green","blue","yellow","cyan","black")[as.numeric(data3$DEATH_EVENT)],
@@ -73,34 +73,46 @@ par(op)
 
 #Valores propios asociados de manera creciente
 print(prox$GOF) #Son bajos, no s por que
-indiv <- MDSplot(mod2,data3$DEATH_EVENT)
+indiv <- MDSplot(randomForest2,data3$DEATH_EVENT)
+
+#Curva ROC para el segundo caso
+pred2 <- predict(randomForest2, data3[-training.ids,])
+table(data3[-training.ids,"DEATH_EVENT"], pred2, dnn = c("Actual","Predicho"))
+
+probs2 <- predict(randomForest2, data3[-training.ids,], type = "prob")
+pred2 <- prediction(probs2[,2],data3[-training.ids,"DEATH_EVENT"])
+perf2 <- performance(pred2,"tpr","fpr")
+plot(perf2)
+auc2 <- performance(pred,measure = "auc")
+#auc -> a@y.values
 
 
 #Se pueden quitar variables que entregan menor informacion para verificar el error y el rendimiento  **********
 
-importantData <- data[,c(1,3,5,13)]
+importantData <- data[,c(1,5,8,13)]
 importantData$DEATH_EVENT <- factor(importantData$DEATH_EVENT)
 
 #Se crea un nuevo randomForest
 
-mod3 <- randomForest(DEATH_EVENT ~ ., data = importantData, ntree = 500, importance = TRUE, proximity = TRUE) #Pareciera ser que el error aumenta
-print(mod3)
+randomForest3 <- randomForest(DEATH_EVENT ~ ., data = importantData, ntree = 500, importance = TRUE, proximity = TRUE) #Pareciera ser que el error aumenta
+print(randomForest3)
 #Se obtiene el grafico
-plot(mod3)
+plot(randomForest3)
 
 #MASS #REVISAR
 require(MASS)
 parcoord(data3[,1:6],var.label = TRUE,col = c("red","green","blue")[as.numeric(data3$DEATH_EVENT)])
-legend("bottomright",legend = c("DEATH_EVENT"),fill = 1:4)
+#legend("bottomright",legend = c("DEATH_EVENT"),fill = 1:4)
+legend("bottomright",fill = 1:4)
 
 #mtry = 2 / recomendacion
 mod4 <- randomForest(DEATH_EVENT ~ ., data = importantData, ntree = 500, mtry = 2, importance = TRUE, proximity = TRUE) 
-print(mod4) # Se obtiene un 28,76% de OOB
+print(mod4) # Se obtiene un 23,99% de OOB
 
 #mtry = 3 / testeo
 mod5 <- randomForest(DEATH_EVENT ~ ., data = importantData, ntree = 500, mtry = 3, importance = TRUE, proximity = TRUE) 
-print(mod5) # Se obtiene un 27,42% de OOB -> disminuye
+print(mod5) # Se obtiene un 23,99% de OOB -> disminuye
 
-#mtry = 4 / testeo
-mod6 <- randomForest(DEATH_EVENT ~ ., data = importantData, ntree = 500, mtry = 5, importance = TRUE, proximity = TRUE) 
-print(mod6) # Se obtiene un 27,76% de OOB
+#mtry = 6 / testeo
+mod6 <- randomForest(DEATH_EVENT ~ ., data = importantData, ntree = 500, mtry = 6, importance = TRUE, proximity = TRUE) 
+print(mod6) # Se obtiene un 23,99% de OOB
