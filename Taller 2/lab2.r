@@ -82,7 +82,7 @@ pairs(cbind(data3[,1:6],prox$points),cex = 0.6, gap = 0,
 par(op)
 
 #Valores propios asociados de manera creciente
-print(prox$GOF) #Son bajos, no s por que
+print(prox$GOF) #Son bajos
 indiv <- MDSplot(randomForest2,data3$DEATH_EVENT)
 
 #Curva ROC para el segundo caso
@@ -99,7 +99,7 @@ auc2 <- performance(pred,measure = "auc")
 
 #Se pueden quitar variables que entregan menor informacion para verificar el error y el rendimiento  **********
 
-importantData <- data[,c(1,5,8,13)]
+importantData <- data3[,c(1,3,5,7)]
 importantData$DEATH_EVENT <- factor(importantData$DEATH_EVENT)
 
 #Se crea un nuevo randomForest
@@ -109,7 +109,7 @@ print(randomForest3)
 #Se obtiene el grafico
 plot(randomForest3)
 
-#MASS #REVISAR
+#MASS 
 require(MASS)
 parcoord(data3[,1:6],var.label = TRUE,col = c("red","green","blue")[as.numeric(data3$DEATH_EVENT)])
 #legend("bottomright",legend = c("DEATH_EVENT"),fill = 1:4)
