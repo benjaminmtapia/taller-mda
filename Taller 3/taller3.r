@@ -51,7 +51,7 @@ training_corpus1 <- Corpus(VectorSource(training_data1$text))
 training_matrix1 <- DocumentTermMatrix(training_corpus1)
 training_sparse1 <- as.compressed.matrix(training_matrix1)
 training_tune1 <- tune.maxent(training_sparse1, training_data1$major, nfold=3,showall = TRUE,verbose =TRUE)
-training_model1 <- maxent(training_sparse1, training_data1$major, l1_regularizer = training_tune1[8,1], l2_regularizer = training_tune1[8,2],use_sgd = training_tune1[8,3],set_heldout = training_tune1[8,4]) #modelo de maxent
+training_model1 <- maxent(test_set, training_data1$major, l1_regularizer = training_tune1[8,1], l2_regularizer = training_tune1[8,2],use_sgd = training_tune1[8,3],set_heldout = training_tune1[8,4]) #modelo de maxent
 training_result1 <- as.data.frame(predict(training_model1,training_sparse1))
 
 recuperadoRelevante1 = 0
@@ -131,14 +131,23 @@ recuperadoNoRelevante = 0
 nRecuperadoRelevante = 0
 nRecuperadoNoRelevante = 0
 
-for(i in 1:nrow(training_result)){
-  row = training_result[i,]
-  label = as.numeric(row[1,1])
-  col <- which(colnames(row) == as.character(label))
+#conjunto de prueba
+corpus_test <- Corpus(VectorSource(test_set$text))
+matrix_test <- DocumentTermMatrix(corpus_test)
+sparse_test <- as.compressed.matrix(matrix_test)
+results_test <- predict(training_model,sparse_test)
+
+
+
+
+for(i in 1:nrow(results_test)){
+  row = results_test[i,]
+  label = as.numeric(row[1])
+  col <- which(colnames(results_test) == as.character(label))
   #Caso relevantes
   if (label == 3 || label == 5 ||  label == 12 ||  label == 18 || label == 20 || label == 21 ){
     #Recuperado
-    if(as.numeric(row[1,col]) >= 0.55){ 
+    if(as.numeric(row[col]) >= 0.55){ 
       recuperadoRelevante = recuperadoRelevante + 1
     }
     #No Recuperado
@@ -149,7 +158,7 @@ for(i in 1:nrow(training_result)){
   #Caso no relevantes
   else{
     #Recuperado
-    if(as.numeric(row[1,col]) >= 0.55){
+    if(as.numeric(row[col]) >= 0.55){
       recuperadoNoRelevante = recuperadoNoRelevante + 1
     }
     #No Recuperado
