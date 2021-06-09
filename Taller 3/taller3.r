@@ -44,7 +44,7 @@ fOriginal <- tune.maxent(sparse1,data$major,nfold=3, showall = TRUE, verbose=TRU
 training_index1 <- sample(nrow(data), size = nrow(data)*0.8)
 training_data1 <- data[training_index1,]
 #set de prueba
-test_set1 <- data[-training_index1,]
+test_set1 <- data[-training_index1,] #Test_data
 
 #se aplica max entropia a conjunto de entrenamiento
 training_corpus1 <- Corpus(VectorSource(training_data1$text))
@@ -54,19 +54,25 @@ training_tune1 <- tune.maxent(training_sparse1, training_data1$major, nfold=3,sh
 training_model1 <- maxent(training_sparse1, training_data1$major, l1_regularizer = training_tune1[8,1], l2_regularizer = training_tune1[8,2],use_sgd = training_tune1[8,3],set_heldout = training_tune1[8,4]) #modelo de maxent
 training_result1 <- as.data.frame(predict(training_model1,training_sparse1))
 
+#Se aplica el metodo al conjunto de datos de prueba
+corpus_test <- Corpus(VectorSource(test_set1$text))
+matrix_test <- DocumentTermMatrix(corpus_test)
+sparse_test <- as.compressed.matrix(matrix_test)
+results_test <- predict(training_model1,sparse_test) #Results_
+
 recuperadoRelevante1 = 0
 recuperadoNoRelevante1 = 0
 nRecuperadoRelevante1 = 0
 nRecuperadoNoRelevante1 = 0
 
-for(i in 1:nrow(training_result1)){
-  row = training_result1[i,]
-  label = as.numeric(row[1,1])
+for(i in 1:nrow(results_test)){
+  row = results_test[i,]
+  label = as.numeric(row[1])
   col <- which(colnames(row) == as.character(label))
   #Caso relevantes
   if (label == 3 || label == 5 ||  label == 12 ||  label == 18 || label == 20 || label == 21 ){
     #Recuperado
-    if(as.numeric(row[1,col]) >= 0.55){ 
+    if(as.numeric(row[1]) >= 0.55){ 
       recuperadoRelevante1 = recuperadoRelevante1 + 1
     }
     #No Recuperado
@@ -77,7 +83,7 @@ for(i in 1:nrow(training_result1)){
   #Caso no relevantes
   else{
     #Recuperado
-    if(as.numeric(row[1,col]) >= 0.55){
+    if(as.numeric(row[1]) >= 0.55){
       recuperadoNoRelevante1 = recuperadoNoRelevante1 + 1
     }
     #No Recuperado
@@ -86,7 +92,6 @@ for(i in 1:nrow(training_result1)){
     }
   }
 }
-
 
 
 ### Utilizando el dataset con pre-procesamiento ###
@@ -126,19 +131,25 @@ training_tune <- tune.maxent(training_sparse, training_data$major, nfold=3,showa
 training_model <- maxent(training_sparse, training_data$major, l1_regularizer = training_tune[8,1], l2_regularizer = training_tune[8,2],use_sgd = training_tune[8,3],set_heldout = training_tune[8,4]) #modelo de maxent
 training_result <- as.data.frame(predict(training_model,training_sparse))
 
+#Aplicando el metodo
+corpus_test <- Corpus(VectorSource(test_set$text))
+matrix_test <- DocumentTermMatrix(corpus_test)
+sparse_test <- as.compressed.matrix(matrix_test)
+results_test <- predict(training_model,sparse_test)
+
 recuperadoRelevante = 0
 recuperadoNoRelevante = 0
 nRecuperadoRelevante = 0
 nRecuperadoNoRelevante = 0
 
-for(i in 1:nrow(training_result)){
-  row = training_result[i,]
-  label = as.numeric(row[1,1])
-  col <- which(colnames(row) == as.character(label))
+for(i in 1:nrow(results_test)){
+  row = results_test[i,]
+  label = as.numeric(row[1])
+  col <- which(colnames(results_test) == as.character(label))
   #Caso relevantes
   if (label == 3 || label == 5 ||  label == 12 ||  label == 18 || label == 20 || label == 21 ){
     #Recuperado
-    if(as.numeric(row[1,col]) >= 0.55){ 
+    if(as.numeric(row[col]) >= 0.55){ 
       recuperadoRelevante = recuperadoRelevante + 1
     }
     #No Recuperado
@@ -149,7 +160,7 @@ for(i in 1:nrow(training_result)){
   #Caso no relevantes
   else{
     #Recuperado
-    if(as.numeric(row[1,col]) >= 0.55){
+    if(as.numeric(row[col]) >= 0.55){
       recuperadoNoRelevante = recuperadoNoRelevante + 1
     }
     #No Recuperado
