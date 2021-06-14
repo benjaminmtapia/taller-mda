@@ -24,6 +24,7 @@ bn_df <- data.frame(insurance)
 res <- hc(bn_df)
 plot(res)
 print(score(res,bn_df)) #BIC
+print(logLik(res,bn_df))
 
 #Aca se realiza la comparacion entre el res (que es el HC)con el dag (que es el model2network)
 compare(res,dag, arcs = TRUE)
@@ -32,6 +33,7 @@ compare(res,dag, arcs = TRUE)
 resmmhc <- mmhc (bn_df)
 plot(resmmhc)
 print(score(resmmhc,bn_df))
+print(logLik(resmmhc,bn_df))
 
 #Aca se realiza la comparacion entre el resmmhc con el dag (que es el model2network)
 compare(resmmhc,dag, arcs = TRUE)
@@ -40,6 +42,7 @@ compare(resmmhc,dag, arcs = TRUE)
 resmmpc <- mmpc(bn_df)
 plot(resmmpc)
 print(score(resmmpc,bn_df)) # no printea, error
+print(logLik(resmmpc,bn_df))
 
 #Aca se realiza la comparacion entre el resmmpc con el dag (que es el model2network)
 compare(resmmpc,dag, arcs = TRUE)
