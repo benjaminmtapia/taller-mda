@@ -45,6 +45,14 @@ plot(resmmhc)
 print(score(resmmhc,bn_df))
 print(logLik(resmmhc,bn_df))
 
+viewer(resmmhc,
+       bayesianNetwork.width = "100%",
+       bayesianNetwork.height = "80vh",
+       bayesianNetwork.layout = "layout_with_sugiyama",
+       bayesianNetwork.title="Discrete Bayesian Network",
+       bayesianNetwork.subtitle = "Insurance Dataset",
+)  
+
 #Aca se realiza la comparacion entre el resmmhc con el dag (que es el model2network)
 c2 <- compare(resmmhc,dag, arcs = TRUE)
 
@@ -54,10 +62,17 @@ plot(resmmpc)
 print(score(resmmpc,bn_df)) # no printea, error
 print(logLik(resmmpc,bn_df))
 
+viewer(resmmpc,
+       bayesianNetwork.width = "100%",
+       bayesianNetwork.height = "80vh",
+       bayesianNetwork.layout = "layout_with_sugiyama",
+       bayesianNetwork.title="Discrete Bayesian Network",
+       bayesianNetwork.subtitle = "Insurance Dataset",
+)
+
 #Aca se realiza la comparacion entre el resmmpc con el dag (que es el model2network)
 c3<-compare(resmmpc,dag, arcs = TRUE)
 
-################ Aca hacia abajo falta revisar
 
 #se usa el modelo con mejor bic
 fittedbn <- bn.fit(res, data = bn_df) # Se obtiene la tabla de probabilidades condicionales mediante EM. (Máxima Expectación, propagación de la evidencia)
