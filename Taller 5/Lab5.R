@@ -27,10 +27,15 @@ data$smoking <-as.numeric(data$smoking)
 data$time <-as.numeric(data$time)
 data$DEATH_EVENT <-as.numeric(data$DEATH_EVENT)
 
+attach(data)
+
+#Dataset
+data2 <- data[,c(1,3,5,7,8,9,13)]
+data2$DEATH_EVENT <- factor(data2$DEATH_EVENT)
 
 #SVM
 formula = DEATH_EVENT ~.
-model <- svm(formula, data)
+model <- svm(formula, data2)
 summary(model)
 
 '''
@@ -43,25 +48,20 @@ Parameters:
 Number of Support Vectors:  250
 '''
 
-x<- subset(data, select =  -DEATH_EVENT)
+x<- subset(data2, select =  -DEATH_EVENT)
 y <- DEATH_EVENT
 model2 <- svm(x,y)
 pred <- predict (model,x)
 table(pred,y)
 
 
-plot(cmdscale(dist(data[,-13])), col = as.integer(data[,13]), pch = c("o","+")[1:150 %in% model$index + 1])
+plot(cmdscale(dist(data2[,-7])), col = as.integer(data2[,7]), pch = c("o","+")[1:299 %in% model$index + 1])
 
-obj<-tune(svm,DEATH_EVENT~.,data=data,kernel="radial",ranges=list(cost=2^(-1:4)),tunecontrol=tune.control(sampling="cross",cross=2))
+obj<-tune(svm,DEATH_EVENT~.,data=data2,kernel="radial",ranges=list(cost=2^(-1:4)),tunecontrol=tune.control(sampling="cross",cross=2))
 plot(obj)
 summary(obj$best.model)
 
 '''
-
-Call:
-best.tune(method = svm, train.x = DEATH_EVENT ~ ., data = data, ranges = list(cost = 2^(-1:4)), tunecontrol = tune.control(sampling = "cross", 
-    cross = 2), kernel = "radial")
-
 
 Parameters:
    SVM-Type:  eps-regression 
@@ -70,6 +70,7 @@ Parameters:
       gamma:  0.08333333 
     epsilon:  0.1 
 
+
 Number of Support Vectors:  250
 '''
 
@@ -77,15 +78,48 @@ pred<- predict(obj$best.model,x)
 table(pred,DEATH_EVENT)
 
 
-obj<-tune(svm,DEATH_EVENT~.,data=data,kernel="linear",ranges=list(gamma=2^(-2:4),cost=2^(-1:4),tunecontrol=tune.control(sampling="cross",cross=2)))
+obj<-tune(svm,DEATH_EVENT~.,data=data2,kernel="linear",ranges=list(gamma = 2^(-2:4),cost=2^(-1:4)),tunecontrol=tune.control(sampling="cross",cross=2))
 summary(obj)
 
+'
+Parameter tuning of ‘svm’:
 
-pred<-predict(obj$best.model,x)
+- sampling method: 2-fold cross validation 
+
+- best parameters:
+ gamma cost
+  0.25    2
+
+- best performance: 0.1546886 
+'
+
+pred<-predict(obj$best.model,x,decision.values = TRUE)
 table(pred,DEATH_EVENT)
 
 
 
-obj<-tune(svm,DEATH_EVENT~.,data=data,kernel="radial",ranges=list(gamma=2^(-7:12),cost=2^(-7:14),tunecontrol=tune.control(sampling="cross",cross=2)))
+obj<-tune(svm,DEATH_EVENT~.,data=data2,kernel="radial",ranges=list(cost=2^(-7:14),gamma=2^(-7:14)),tunecontrol = tune.control(sampling = "cross", cross = 2))
+summary(obj$best.model)
+plot(obj)
+'
+- sampling method: 2-fold cross validation 
+
+- best parameters:
+  gamma cost
+ 0.0625    1
+
+- best performance: 0.1542959 
+'
 pred<-predict(obj$best.model,x)
 table(pred,DEATH_EVENT)
+
+#variables mas importantes
+importantData <- data[,c(1,3,5,7,13)]
+obj<-tune(svm,DEATH_EVENT~.,data=data2,kernel="radial",ranges=list(gamma = 2^(-2:4),cost=2^(-1:4)),tunecontrol=tune.control(sampling="cross",cross=2))
+summary(obj)
+pred<-predict(obj$best.model,x,decision.values = TRUE)
+table(pred,DEATH_EVENT)
+
+require(RWeka)
+
+
