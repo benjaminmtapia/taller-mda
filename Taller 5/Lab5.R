@@ -121,5 +121,23 @@ pred<-predict(obj$best.model,x,decision.values = TRUE)
 table(pred,DEATH_EVENT)
 
 require(RWeka)
+ranking <- InfoGainAttributeEval(DEATH_EVENT ~ . , data = data2)
+
+#Las variables mas importantes son:
+# Age - 0.04942683
+# Creatinine phosphokinase - 0.0000
+# Ejection fraction 0.10179335
+# Platelets - 0.0000
+# Serum creatinine - 0.15498969
+# Serum sodium - 0.04285766
+
+data3 <-data2[,c(3,5,6,13)]
+obj<-tune(svm,DEATH_EVENT~.,data=data3,kernel="radial",ranges=list(gamma = 2^(-2:4),cost=2^(-1:4)),tunecontrol=tune.control(sampling="cross",cross=2))
+summary(obj)
+pred<-predict(obj$best.model,x,decision.values = TRUE)
+table(pred,DEATH_EVENT)
+plot(obj)
+
+
 
 
