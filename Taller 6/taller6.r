@@ -1,21 +1,32 @@
+#HACER VALIDACION CRUZADA BALANCEADA, DIVIDIR SENAL EN LA MITAD, ENTRENAR CON UNA Y TESTEAR CON LA OTRA
+#ORDENAR MODELOS POR EFICIENCIA EN TEST
+
 require(e1071)
-datos=read.csv("G1_001.csv")
+
+datos = read.csv("G1_001.csv")
+#datos = read.csv("G4_001.csv")
+
+
 attach(datos)
 
-Ts=0.2
-Tiempo=seq(Ts,(length(VFSC))*Ts,Ts)
-formula=VFSC ~ PAM
+#Paso preliminar
+
+Ts = 0.2
+Tiempo = seq(Ts,(length(VFSC))*Ts,Ts)
+formula = VFSC ~ PAM
+
+#Generacion del modelo SVM
 
 model <- svm(formula , datos)
-#
 VFSC_estimated <- predict(model, PAM)
 eficiencia<-cor(VFSC_estimated,VFSC,method = "pearson")
 
 plot(Tiempo,VFSC,type="l")
 lines(Tiempo,VFSC_estimated, col = "red")
 legend("topright", c("VFSC","VFSC_estimated"), title = paste("Corr=",round(eficiencia,digits=5)), pch = 1, col=c("blue","red"),lty=c(2,1),inset = 0.01)
-#
 
+
+#Generacion del modelo utilizando tune
 
 tuneResult <- tune(svm, formula,  data = datos,
                    ranges = list(nu = seq(0.1,0.9,0.1), cost = 2^(-4:4), type="nu-regression")
@@ -24,14 +35,14 @@ tuneResult <- tune(svm, formula,  data = datos,
 tunedModel <- tuneResult$best.model
 VFSC_tunedModel <- predict(tunedModel, PAM)
 eficienciaTuned<-cor(VFSC_tunedModel,VFSC,method = "pearson")
-
 plot(Tiempo,VFSC,type="l")
 lines(Tiempo,VFSC_estimated, col = "red")
 lines(Tiempo,VFSC_tunedModel, col = "blue")
 legend("topright", c("VFSC",paste("VFSC_estimated corr=",round(eficiencia,5)),paste("VFSC_Tuned corr",round(eficienciaTuned,5))), title = "Correlacion", pch = 1, col=c("blue","red"),lty=c(2,1),inset = 0.01)
 
+#Respuesta al impulso
 
-
+#Se genera la matriz de retardos
 retardos_multi <- function(
   signalData,
   lags
@@ -68,31 +79,27 @@ retardos_multi <- function(
 }
 
 
-
-
-
-
-
-
-
+# Validacion cruzada
 
 require(doParallel)
 require(e1071)
-registerDoParallel(cores = 6)
+registerDoParallel(cores = 4)
 cost <- 2^seq(-4, 12, 2)
 nu <- seq(0.1, 0.9, 0.4)
 gamma<-2^seq(-4, 12, 2)
 lagsList<-seq(1,5,1)
 
 datos=read.csv("G1_001.csv")
+
+# Normalizacion de los datos, se estandarizan en valores entre 0 - 1
+
 PAMn<-(datos$PAM-min(datos$PAM))/(max(datos$PAM)-min(datos$PAM))
 VFSCn<-(datos$VFSC-min(datos$VFSC))/(max(datos$VFSC)-min(datos$VFSC))
 data <- data.frame(PAMn,VFSCn)
+#Tiempo de muestreo
 Ts=0.2
 
 parms <- expand.grid(lagsList=lagsList, cost = cost, nu = nu, gamma=gamma)
-
-
 salida <- (c( foreach(i = 1:nrow(parms),  combine = rbind, .inorder = FALSE) %dopar% {
   c <- parms[i, ]$cost
   n <- parms[i, ]$nu
@@ -113,13 +120,13 @@ salida <- (c( foreach(i = 1:nrow(parms),  combine = rbind, .inorder = FALSE) %do
 }))
 
 
-
+#Se muestran los resultados
 output <- matrix(unlist(salida), ncol = 5, byrow = TRUE)
 mejoresModelos<-output[order(output[,5], decreasing = TRUE),]
 print(mejoresModelos)
 
 
-
+# Capacidad de autoregulacion
 inverseStep=matrix(1,180/Ts,1)
 inverseStep[(90/Ts):(180/Ts),1]=0
 
