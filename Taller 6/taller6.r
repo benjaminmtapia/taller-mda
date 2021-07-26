@@ -3,8 +3,8 @@
 
 require(e1071)
 
-datos = read.csv("G1_001.csv")
-#datos = read.csv("G4_001.csv")
+#datos = read.csv("G1_001.csv")
+datos = read.csv("G4_001.csv")
 
 
 attach(datos)
@@ -29,7 +29,7 @@ legend("topright", c("VFSC","VFSC_estimated"), title = paste("Corr=",round(efici
 #Generacion del modelo utilizando tune
 
 tuneResult <- tune(svm, formula,  data = datos,
-                   ranges = list(nu = seq(0.1,0.9,0.1), cost = 2^(-4:4), type="nu-regression")
+                   ranges = list(nu = seq(0.1,0.5,0.1), cost = 2^(-4:4), type="nu-regression")
 )
 
 tunedModel <- tuneResult$best.model
@@ -84,9 +84,9 @@ retardos_multi <- function(
 require(doParallel)
 require(e1071)
 registerDoParallel(cores = 4)
-cost <- 2^seq(-4, 12, 2)
+cost <- 2^seq(-4, 8, 2)
 nu <- seq(0.1, 0.9, 0.4)
-gamma<-2^seq(-4, 12, 2)
+gamma<-2^seq(-4, 8, 2)
 lagsList<-seq(1,5,1)
 
 datos=read.csv("G1_001.csv")
@@ -99,6 +99,15 @@ data <- data.frame(PAMn,VFSCn)
 #Tiempo de muestreo
 Ts=0.2
 
+
+tam_muestra <- floor(0.50 * nrow(datos))
+## set the seed to make your partition reproducible
+set.seed(123)
+training_index <- sample(nrow(data), size = tam_muestra)
+training_set <- data[training_index, ]
+test_set <- data[-training_index, ]
+
+
 parms <- expand.grid(lagsList=lagsList, cost = cost, nu = nu, gamma=gamma)
 salida <- (c( foreach(i = 1:nrow(parms),  combine = rbind, .inorder = FALSE) %dopar% {
   c <- parms[i, ]$cost
@@ -106,17 +115,25 @@ salida <- (c( foreach(i = 1:nrow(parms),  combine = rbind, .inorder = FALSE) %do
   g <- parms[i, ]$gamma
   l <- parms[i, ]$lagsList
   lag<-list(PAMn = l,VFSCn = 0)
-  signal.train <- retardos_multi(data, lag)
-  
+  signal.train <- retardos_multi(training_set, lag)
   retDatos=signal.train$folded.signal
   x=subset(retDatos, select = -VFSCn)
   y=retDatos$VFSCn
   modelo <- e1071::svm(x, y, type = "nu-regression", kernel = "radial", cost = c, nu = n, gamma=g)
-  pred <- predict(modelo, x) 
-  corr_pred<-cor(pred,y,method = "pearson")
-  
+  dataframe <- data.frame(PAMn = test_set$PAMn)
+  colnames <- c("PAMn")
+  aux <- ncol(x)-1
+  for(i in 1:aux){
+    colname <- paste('PAMn.lag',i,sep="")
+    colnames <- append(colnames, colname)
+    newcol <- data.frame(i = test_set$PAMn)
+    dataframe <- cbind(dataframe, newcol)
+  }
+  colnames(dataframe) <-colnames
+  pred <- predict(modelo, dataframe)
+  corr_pred<-cor(pred,test_set$VFSCn,method = "pearson")
+  dataframe <- NULL
   c(l, c, n, g, corr_pred)
-  
 }))
 
 
@@ -158,12 +175,10 @@ for (i in 1:length(mejoresModelos[,1])){
   stepResponse <- predict(mejorModelo, x ) 
   plot(stepTime,retDatos$PAMn,type="l", col="red")
   lines(stepTime,stepResponse, col = "blue")
-  legend("topright", c("Escalon de presión", "respuesta al escalon"), title = "autorregulacion", pch = 1, col=c("red","blue"),lty=c(1,1),inset = 0.01)
+  legend("topright", c("Escalon de presi?n", "respuesta al escalon"), title = "autorregulacion", pch = 1, col=c("red","blue"),lty=c(1,1),inset = 0.01)
   print(paste("corr=",mejoresModelos[i,5]))
   readline(prompt="Press [enter] to continue")
 }
-
-
 
 
 
